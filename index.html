@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selecionar e Copiar Itens</title>
+    <!-- Carrega o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Adiciona a fonte Inter (preferida pelo Tailwind) */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4 sm:p-8">
+
+    <div class="bg-white p-6 sm:p-10 rounded-2xl shadow-xl w-full max-w-5xl">
+        
+        <!-- Cabeçalho -->
+        <div class="mb-8 text-center sm:text-left">
+            <h1 class="text-3xl font-bold text-gray-900">Gerador de Lista de Itens</h1>
+            <p class="text-gray-600 mt-2">Selecione os itens desejados da lista abaixo. Eles serão copiados em ordem.</p>
+        </div>
+
+        <!-- Lista de Checkboxes -->
+        <div id="itemList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+            <!-- Os itens serão populados aqui pelo JavaScript -->
+        </div>
+
+        <!-- Botão e Mensagem de Confirmação -->
+        <div class="mt-10 text-center">
+            <button id="copyButton" class="w-full sm:w-auto bg-blue-600 text-white py-3 px-10 rounded-lg font-semibold shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all transform hover:scale-105">
+                Copiar Itens Selecionados
+            </button>
+            
+            <!-- Caixa de Mensagem (para cópia e erros) -->
+            <div id="messageBox" class="mt-4 font-medium opacity-0 transition-opacity duration-300 h-6">
+                <!-- Mensagem inserida via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Lista de itens fornecida
+            const items = [
+                "Agenda", "Agenda-Recepção", "Agenda Pro365", "Anamnese", 
+                "Confirmação de consultas via WhatsApp", "Imagens", "Documentos", 
+                "Auditoria", "Oportunidades", "Odontograma", "Orçamentos", "Receber", 
+                "Controle Bancário", "Inadimplentes", "Contas a Pagar", 
+                "Indicadores Gerenciais", "Receitas", "Atestados", "Impressão de Textos", 
+                "Indicação", "Anotações de clientes", "Tarefas", "Campanhas", "Estoque", 
+                "Custos", "Filtro", "Fichas configuráveis", "Controle protético", 
+                "Fichas Configuráveis", "Fila de Espera", "D.C.M. (Disfunção Crânio-Mandibular)", 
+                "APP (Visualização da Agenda)", "Assinatura eletrônica", "Central de ajuda", 
+                "Repasse", "Pro365 IA", "Observações Clínicas", 
+                "Lembrete de consultas via WhatsApp", "Fast-in (Anamnese digital)", 
+                "Editor de textos"
+            ];
+
+            const itemListContainer = document.getElementById('itemList');
+            const copyButton = document.getElementById('copyButton');
+            const messageBox = document.getElementById('messageBox');
+
+            let messageTimer; // Timer para esconder a mensagem
+
+            // --- Função para mostrar mensagens (sucesso ou erro) ---
+            function showMessage(message, isError = false) {
+                clearTimeout(messageTimer); // Limpa timer anterior
+                messageBox.textContent = message;
+                messageBox.classList.remove('opacity-0', 'text-green-600', 'text-red-600');
+                
+                if (isError) {
+                    messageBox.classList.add('text-red-600');
+                } else {
+                    messageBox.classList.add('text-green-600');
+                }
+                
+                messageTimer = setTimeout(() => {
+                    messageBox.classList.add('opacity-0');
+                }, 3000);
+            }
+
+            // 1. Popula a lista de checkboxes
+            items.forEach(item => {
+                const label = document.createElement('label');
+                label.className = "flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors duration-200 border border-gray-200";
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = item;
+                checkbox.className = "item-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500";
+                
+                const span = document.createElement('span');
+                span.textContent = item;
+                span.className = "text-gray-800 select-none";
+
+                label.appendChild(checkbox);
+                label.appendChild(span);
+                itemListContainer.appendChild(label);
+            });
+
+            // --- Pega os itens selecionados (função auxiliar) ---
+            function getSelectedItems() {
+                const selectedItems = [];
+                const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+                checkedBoxes.forEach(checkbox => {
+                    selectedItems.push(checkbox.value);
+                });
+                return selectedItems;
+            }
+
+            // 2. Adiciona a função de clique ao botão "Copiar"
+            copyButton.addEventListener('click', function() {
+                const selectedItems = getSelectedItems();
+
+                if (selectedItems.length === 0) {
+                    showMessage('Por favor, selecione pelo menos um item.', true);
+                    return;
+                }
+
+                const textToCopy = selectedItems.join('\n');
+                
+                // --- Lógica para Copiar para a Área de Transferência ---
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = textToCopy;
+                tempTextArea.style.position = 'absolute';
+                tempTextArea.style.left = '-9999px';
+                
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                try {
+                    document.execCommand('copy');
+                    showMessage('Itens copiados para a área de transferência!');
+                } catch (err) {
+                    console.error('Falha ao copiar texto: ', err);
+                    showMessage('Falha ao copiar. Verifique as permissões.', true);
+                }
+                document.body.removeChild(tempTextArea);
+            });
+
+        });
+    </script>
+
+</body>
+</html>
