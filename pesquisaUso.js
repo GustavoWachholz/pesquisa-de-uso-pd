@@ -50,9 +50,32 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error("O elemento 'itemList' não foi encontrado na página.");
     }
 
-    // MUDANÇA #4: Remoção do JavaScript do botão "Copiar"
-    // Não precisamos mais da função showMessage, getSelectedItems, 
-    // ou do event listener do botão, pois o formulário HTML 
-    // padrão cuidará do envio.
+    copyButton.addEventListener('click', function() {
+        const selectedItems = getSelectedItems();
+
+        if (selectedItems.length === 0) {
+            showMessage('Por favor, selecione pelo menos um item.', true);
+            return;
+        }
+
+        const textToCopy = selectedItems.join('\n');
+        
+        // --- Lógica para Copiar para a Área de Transferência ---
+        const tempTextArea = document.createElement('textarea');
+        tempTextArea.value = textToCopy;
+        tempTextArea.style.position = 'absolute';
+        tempTextArea.style.left = '-9999px';
+        
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+        try {
+            document.execCommand('copy');
+            showMessage('Itens copiados para a área de transferência!');
+        } catch (err) {
+            console.error('Falha ao copiar texto: ', err);
+            showMessage('Falha ao copiar. Verifique as permissões.', true);
+        }
+        document.body.removeChild(tempTextArea);
+    });
 
 });
