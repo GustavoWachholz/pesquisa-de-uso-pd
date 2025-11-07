@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 2. Adiciona a função de clique ao botão "Copiar"
+    // --- (MODIFICAÇÃO PRINCIPAL AQUI) ---
     copyButton.addEventListener('click', function() {
         const selectedItems = getSelectedItems();
 
@@ -79,22 +80,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const textToCopy = selectedItems.join('\n');
         
-        // --- Lógica para Copiar para a Área de Transferência ---
-        const tempTextArea = document.createElement('textarea');
-        tempTextArea.value = textToCopy;
-        tempTextArea.style.position = 'absolute';
-        tempTextArea.style.left = '-9999px';
+        // --- Lógica MODERNA para Copiar para a Área de Transferência ---
+        // Usamos a API do Navegador (navigator.clipboard)
         
-        document.body.appendChild(tempTextArea);
-        tempTextArea.select();
-        try {
-            document.execCommand('copy');
-            showMessage('Itens copiados para a área de transferência!');
-        } catch (err) {
-            console.error('Falha ao copiar texto: ', err);
-            showMessage('Falha ao copiar. Verifique as permissões.', true);
-        }
-        document.body.removeChild(tempTextArea);
+        navigator.clipboard.writeText(textToCopy)
+            .then(() => {
+                // Sucesso!
+                showMessage('Itens copiados para a área de transferência!');
+            })
+            .catch(err => {
+                // Falha!
+                console.error('Falha ao copiar texto: ', err);
+                showMessage('Falha ao copiar. Verifique as permissões.', true);
+            });
     });
 
 });
