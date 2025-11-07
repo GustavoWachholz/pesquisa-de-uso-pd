@@ -68,6 +68,34 @@ document.addEventListener('DOMContentLoaded', function() {
         return selectedItems;
     }
 
+    // --- (NOVA FUNÇÃO) Função Fallback (Plano B) ---
+    // Esta é a sua lógica original, que agora serve como fallback
+    function fallbackCopyTextToClipboard(text) {
+        const tempTextArea = document.createElement('textarea');
+        tempTextArea.value = text;
+        tempTextArea.style.position = 'absolute';
+        tempTextArea.style.left = '-9999px'; // Esconde fora da tela
+        
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+        tempTextArea.setSelectionRange(0, 99999); // Para compatibilidade com celulares
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showMessage('Itens copiados para a área de transferência!');
+            } else {
+                showMessage('Falha ao copiar. O dispositivo não suportou o comando.', true);
+            }
+        } catch (err) {
+            console.error('Falha ao copiar (fallback): ', err);
+            showMessage('Falha ao copiar. Verifique as permissões.', true);
+        }
+        
+        document.body.removeChild(tempTextArea);
+    }
+
+
     // 2. Adiciona a função de clique ao botão "Copiar"
     // --- (MODIFICAÇÃO PRINCIPAL AQUI) ---
     copyButton.addEventListener('click', function() {
@@ -80,19 +108,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const textToCopy = selectedItems.join('\n');
         
-        // --- Lógica MODERNA para Copiar para a Área de Transferência ---
-        // Usamos a API do Navegador (navigator.clipboard)
+        // --- Lógica de Cópia "Híbrida" (Moderna com Fallback) ---
         
-        navigator.clipboard.writeText(textToCopy)
-            .then(() => {
-                // Sucesso!
-                showMessage('Itens copiados para a área de transferência!');
-            })
-            .catch(err => {
-                // Falha!
-                console.error('Falha ao copiar texto: ', err);
-                showMessage('Falha ao copiar. Verifique as permissões.', true);
-            });
+        // Verifica se a API moderna (Plano A) existe
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            
+            // Tenta usar a API Moderna
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    // Sucesso!
+                    showMessage('Itens copiados para a área de transferência!');
+                })
+                .catch(err => {
+                    // A API moderna falhou (como no S24FE)
+                    console.warn('API Moderna falhou. Tentando fallback:', err);
+                    // Executa o Plano B
+                    fallbackCopyTextToClipboard(textToCopy);
+                });
+        } else {
+            // O navegador nem sequer suporta a API moderna (Plano B direto)
+            console.warn('navigator.clipboard não disponível. Usando fallback.');
+            fallbackCopyTextToClipboard(textToCopy);
+        }
     });
 
 });
